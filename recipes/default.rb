@@ -24,7 +24,7 @@ ruby_block "latest_JenkinsBackup" do
     end
     
     Chef::Log.info("Jenkins Backup File1: #{node['jenkins_restore']['file']}")
-    action :run
+    action :create
 end
 
 Chef::Log.info("Jenkins Backup File2: #{node['jenkins_restore']['file']}")
