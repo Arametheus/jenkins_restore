@@ -11,23 +11,24 @@ service "jenkins" do
     action :stop
 end
 
-if InstanceMetadata.wait_for_instance_IAM_metadata_to_be_available()
-    r = execute "aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'" do
-        command cmd
-    End
-    node.ovverride['jenkins_restore']['file'] = r.run_action(:run)
-#ruby_block "s3file" do
-#    block do
-#        #tricky way to load this Chef::Mixin::ShellOut utilities
-#        Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)      
-#        command = "aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'"
-#        command_out = shell_out(command)
-#        node.set['jenkins_restore']['file'] = command_out.stdout
-#    end
-#    action :create
-#end
-    Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
+ruby_block "latest_JenkinsBackup" do
+    block do
+        #tricky way to load this Chef::Mixin::ShellOut utilities
+        Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)      
+        command = `aws s3 ls '#{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
+        command_out = shell_out(command)
+        
+        Chef::Log.info("latest_JenkinsBackup: #{command.stdout}")
+        
+        node.override['jenkins_restore']['file'] = command.stdout
+    end
+    
+    Chef::Log.info("Jenkins Backup File1: #{node['jenkins_restore']['file']}")
+    action :run
 end
+
+Chef::Log.info("Jenkins Backup File2: #{node['jenkins_restore']['file']}")
+
 
 
 
