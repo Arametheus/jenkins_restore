@@ -3,7 +3,7 @@
 # Recipe:: default
 #
 # Copyright (c) 2017 The Authors, All Rights Reserved.
-
+include_recipe "awscli::default"
 
 #InstanceMetadata.wait_for_instance_IAM_metadata_to_be_available()
 
@@ -11,19 +11,23 @@ service "jenkins" do
     action :stop
 end
 
-
-ruby_block "s3file" do
-    block do
-        #tricky way to load this Chef::Mixin::ShellOut utilities
-        Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)      
-        command = "aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'"
-        command_out = shell_out(command)
-        node.set['jenkins_restore']['file'] = command_out.stdout
-    end
-    action :create
+if InstanceMetadata.wait_for_instance_IAM_metadata_to_be_available()
+    r = execute "aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'" do
+        command cmd
+    End
+    node.ovverride['jenkins_restore']['file'] = r.run_action(:run)
+#ruby_block "s3file" do
+#    block do
+#        #tricky way to load this Chef::Mixin::ShellOut utilities
+#        Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)      
+#        command = "aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'"
+#        command_out = shell_out(command)
+#        node.set['jenkins_restore']['file'] = command_out.stdout
+#    end
+#    action :create
+#end
+    Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
 end
-
-Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
 
 
 
@@ -57,10 +61,11 @@ Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
 
 
 
-#service "jenkins" do
-#    action [:start,:enable]
-#end
+service 'jenkins' do
+  supports status: true, restart: true, reload: true
+  action  [:enable, :start]
+end
 
-#service "httpd" do
-#    action [:start,:enable]
-#end
+service "httpd" do
+    action [:start,:enable]
+end
