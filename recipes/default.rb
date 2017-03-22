@@ -28,7 +28,7 @@ end
 
 #Parse build id out of file above 2017-03-22-054801_704.tar.gz
 f = node['jenkins_restore']['file']
-default['jenkins_restore']['buildid'] = f.scan(/.*_(\d+)/).first
+node.override['jenkins_restore']['buildid'] = f.scan(/.*_(\d+)/).first
 Chef::Log.info("Jenkins Build ID: #{node['jenkins_restore']['buildid']}")
 
 file '/usr/tmp/jenkins_restore.tar.gz' do
