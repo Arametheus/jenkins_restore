@@ -17,7 +17,7 @@ ruby_block "latest_JenkinsBackup" do
         node.override['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
         node.override['jenkins_restore']['file'] = node['jenkins_restore']['file'].strip
         
-        node.override['jenkins_restore']['buildid'] = node['jenkins_restore']['file'].scan(/.*_(\d+)/).first.flatten
+        node.override['jenkins_restore']['buildid'] = node['jenkins_restore']['file'].scan(/.*_(\d+)/).first[0]
         
         Chef::Log.info("Jenkins Backup Path: #{node['jenkins_restore']['s3bucket']}")
         Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
