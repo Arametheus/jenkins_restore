@@ -13,9 +13,10 @@ end
 
 ruby_block "latest_JenkinsBackup" do
     block do
-        node.override['jenkins_restore']['file'] = `aws s3 ls '#{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
+        node.override['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
         
-        Chef::Log.info("Jenkins Backup File2: #{node['jenkins_restore']['file']}")
+        Chef::Log.info("Jenkins Backup Path: #{node['jenkins_restore']['s3bucket']}")
+        Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
     end
     action :create
 end
