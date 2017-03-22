@@ -13,21 +13,12 @@ end
 
 ruby_block "latest_JenkinsBackup" do
     block do
-        #tricky way to load this Chef::Mixin::ShellOut utilities
-        Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)      
-        aws_command = "aws s3 ls '#{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'"
-        aws_command_out = shell_out(aws_command)
+        node.override['jenkins_restore']['file'] = `aws s3 ls '#{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
         
-        Chef::Log.info("latest_JenkinsBackup: #{aws_command_out.stdout}")
-        
-        node.override['jenkins_restore']['file'] = aws_command_out.stdout
+        Chef::Log.info("Jenkins Backup File2: #{node['jenkins_restore']['file']}")
     end
     action :create
 end
-
-Chef::Log.info("Jenkins Backup File2: #{node['jenkins_restore']['file']}")
-
-
 
 
 #execute 'awsCPjenkins' do
