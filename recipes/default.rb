@@ -14,10 +14,13 @@ end
 #Find Latest backup of Jenkins in specified S3 Bucket.
 ruby_block "latest_JenkinsBackup" do
     block do
-        node.override['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
+        node.set['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
+        
+        node.set['jenkins_restore']['buildid'] = node['jenkins_restore']['file'].scan(/.*_(\d+)/).first
         
         Chef::Log.info("Jenkins Backup Path: #{node['jenkins_restore']['s3bucket']}")
         Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
+        Chef::Log.info("Jenkins Build ID: #{node['jenkins_restore']['buildid']}")
     end
     action :create
 end
@@ -25,11 +28,6 @@ end
 execute 'awsCPjenkins' do
   command "aws s3 cp s3://#{node['jenkins_restore']['s3bucket']}/#{node['jenkins_restore']['file']} /usr/tmp/jenkins_restore.tar.gz"
 end
-
-#Parse build id out of file above 2017-03-22-054801_704.tar.gz
-f = node['jenkins_restore']['file']
-node.override['jenkins_restore']['buildid'] = f.scan(/.*_(\d+)/).first
-Chef::Log.info("Jenkins Build ID: #{node['jenkins_restore']['buildid']}")
 
 file '/usr/tmp/jenkins_restore.tar.gz' do
     only_if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
