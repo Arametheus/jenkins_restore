@@ -11,6 +11,7 @@ service "jenkins" do
     action :stop
 end
 
+#Find Latest backup of Jenkins in specified S3 Bucket.
 ruby_block "latest_JenkinsBackup" do
     block do
         node.override['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
@@ -21,10 +22,29 @@ ruby_block "latest_JenkinsBackup" do
     action :create
 end
 
+execute 'awsCPjenkins' do
+  command "aws s3 cp s3://#{node['jenkins_restore']['s3bucket']}/#{node['jenkins_restore']['file']} /usr/tmp/jenkins_restore.tar.gz"
+end
 
-#execute 'awsCPjenkins' do
-#  command 'aws s3 cp s3://flw-backup/jenkins/2017-03-08-054800_690.tar.gz /usr/tmp/jenkins_restore.tar.gz'
-#end
+#Parse build id out of file above 2017-03-22-054801_704.tar.gz
+f = node['jenkins_restore']['file']
+default['jenkins_restore']['buildid'] = f.scan(/.*_(\d+)/).first
+Chef::Log.info("Jenkins Build ID: #{node['jenkins_restore']['buildid']}")
+
+file '/usr/tmp/jenkins_restore.tar.gz' do
+    only_if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
+    action :touch
+end
+
+execute 'extract_jenkins_restore_tar' do
+  command 'tar -xvzf jenkins_restore.tar.gz'
+  cwd '/usr/tmp/'
+  if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
+end
+
+
+
+
 
 
 
@@ -34,7 +54,7 @@ end
 
 
  
-#tar -xvzf jenkins_restore.tar.gz
+#
 
 #cd {build number}
 
