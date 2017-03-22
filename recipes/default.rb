@@ -15,8 +15,9 @@ end
 ruby_block "latest_JenkinsBackup" do
     block do
         node.override['jenkins_restore']['file'] = `aws s3 ls #{node['jenkins_restore']['s3bucket']} | sort | tail -n 1 | awk '{print $4}'`
+        node.override['jenkins_restore']['file'] = node['jenkins_restore']['file'].strip
         
-        node.override['jenkins_restore']['buildid'] = node['jenkins_restore']['file'].scan(/.*_(\d+)/).first
+        node.override['jenkins_restore']['buildid'] = node['jenkins_restore']['file'].scan(/.*_(\d+)/) {|i| print i }
         
         Chef::Log.info("Jenkins Backup Path: #{node['jenkins_restore']['s3bucket']}")
         Chef::Log.info("Jenkins Backup File: #{node['jenkins_restore']['file']}")
@@ -26,7 +27,7 @@ ruby_block "latest_JenkinsBackup" do
 end.run_action(:run)
 
 execute 'awsCPjenkins' do
-  command "aws s3 cp s3://#{node['jenkins_restore']['s3bucket']}/#{node['jenkins_restore']['file']} /usr/tmp/jenkins_restore.tar.gz"
+  command "aws s3 cp s3://#{node['jenkins_restore']['s3bucket']}#{node['jenkins_restore']['file']} /usr/tmp/jenkins_restore.tar.gz"
 end
 
 file '/usr/tmp/jenkins_restore.tar.gz' do
