@@ -39,7 +39,7 @@ end
 execute 'extract_jenkins_restore_tar' do
   command 'tar -xvzf jenkins_restore.tar.gz'
   cwd '/usr/tmp/'
-  if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
+  only_if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
 end
 
 
