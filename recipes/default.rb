@@ -41,23 +41,47 @@ execute 'extract_jenkins_restore_tar' do
   only_if { ::File.exist?('/usr/tmp/jenkins_restore.tar.gz') }
 end
 
-
-
-#cd {build number}
-
 #cp *.xml /var/lib/jenkins/
+execute 'cp_xml' do
+  command 'cp *.xml /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
 
 #cp identity.key* /var/lib/jenkins/
+execute 'cp_identity' do
+  command 'cp identity.key* /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
+
 #cp secret.key* /var/lib/jenkins/
+execute 'cp_secretkey' do
+  command 'cp secret.key* /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
+
 #cp -r secrets/ /var/lib/jenkins/
+execute 'cp_secrets' do
+  command 'cp -r secrets/ /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
+
 #cp -r plugins/ /var/lib/jenkins/
+execute 'cp_plugins' do
+  command 'cp -r plugins/ /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
 
 #cp -r users/ /var/lib/jenkins/
-
+execute 'cp_users' do
+  command 'cp -r users/ /var/lib/jenkins/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
 
 #rsync -am --include='config.xml' --include='*/' --prune-empty-dirs --exclude='*' jobs/ /var/lib/jenkins/jobs/
-
-
+execute 'rsync_jobs' do
+  command 'rsync -am --include='config.xml' --include='*/' --prune-empty-dirs --exclude='*' jobs/ /var/lib/jenkins/jobs/'
+  cwd "/usr/tmp/#{node['jenkins_restore']['buildid']}/"
+end
 
 service 'jenkins' do
   supports status: true, restart: true, reload: true
